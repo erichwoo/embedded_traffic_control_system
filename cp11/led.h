@@ -24,11 +24,12 @@
 #define MIO7 7				// Pin number (LED 4, MIO 7 connected directly to PS)
 #define OP_EN 1				// Processing System Output Enable
 
-#define R 0
-#define G 1
-#define B 2
-#define Y 3
-
+// r,g,b,y,w colors for led6
+#define R (1 << 2)
+#define G (1 << 1)
+#define B (1 << 0)
+#define Y (R+G)
+#define W (R+G+B)
 
 /*
  * Initialize the led module
@@ -63,10 +64,10 @@ void led_toggle(u32 led);
  * Set the color of led6 (assumed always on)
  *
  * colors:
- * - r = 0
- * - g = 1
- * - b = 2
- * - y = 3
+ * - r = 0b100 aka 4
+ * - g = 0b010 aka 2
+ * - b = 0b001 aka 1
+ * - y = 0b110 aka 6
  */
 void led6_set(u32 color);
 

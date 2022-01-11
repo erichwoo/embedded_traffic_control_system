@@ -20,8 +20,8 @@ void led_init(void) {
 	XGpioPs_SetDirectionPin(&portPs, MIO7, OUTPUT_PS);
 	XGpioPs_SetOutputEnablePin(&portPs, MIO7, OP_EN);
 
-	// led6 TODO
-	XGpio_Initialize(&port6, XPAR_AXI_GPIO_0_DEVICE_ID);	/* initialize device AXI_GPIO_0 */
+	// led6
+	XGpio_Initialize(&port6, XPAR_AXI_GPIO_1_DEVICE_ID);	/* initialize device AXI_GPIO_0 */
 	XGpio_SetDataDirection(&port6, CHANNEL1, OUTPUT);	    /* set tristate buffer to output */
 }
 
@@ -31,6 +31,7 @@ void led_set(u32 led, bool tostate) {
 		if (led == 4) return;
 	}
 
+	// set 4 leds
 	u32 prev = XGpio_DiscreteRead(&port, CHANNEL1);
 	u32 mask = (led == ALL) ? 0xF : (0x1 << led); // either all leds, bitshift 1 to the correct led
 
@@ -38,6 +39,11 @@ void led_set(u32 led, bool tostate) {
 	else mask = ~mask & prev;  // 0-out mask, then AND in order to 0 out the correct leds
 
 	XGpio_DiscreteWrite(&port, CHANNEL1, mask);
+
+	// turn off port6
+	if (!tostate && led == ALL)
+		XGpio_DiscreteWrite(&port6, CHANNEL1, XGpio_DiscreteRead(&port6, CHANNEL1) & ~W);
+
 }
 
 bool led_get(u32 led) {
@@ -49,13 +55,13 @@ bool led_get(u32 led) {
 }
 
 void led_toggle(u32 led) {
-	//if (led == 4) XGpioPs_WritePin(&portPs, MIO7,  0x1 ^ XGpioPs_ReadPin(&portPs, MIO7));
+	//if (led == 4) XGpioPs_WritePin(&portPs, MIO7, 1 ^ XGpioPs_ReadPin(&portPs, MIO7));
 	//else XGpio_DiscreteWrite(&port, CHANNEL1, (0x1 << led) ^ XGpio_DiscreteRead(&port, CHANNEL1));
+
 	XGpio_DiscreteWrite(&port, CHANNEL1, (0x1 << led) ^ XGpio_DiscreteRead(&port, CHANNEL1));
 }
 
 void led6_set(u32 color){
-	// TODO
-
-	return;
+	u32 mask = XGpio_DiscreteRead(&port6, CHANNEL1) & ~(W);
+	XGpio_DiscreteWrite(&port6, CHANNEL1, color | mask);
 }

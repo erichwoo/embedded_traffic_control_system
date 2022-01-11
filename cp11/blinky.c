@@ -33,11 +33,12 @@ int main() {
 
 	printf("[Hello]\n");
 
-	// modularized
+	// initialize leds, and turn on led0 & 4 @ start
 	led_init();
 	led_set(0, LED_ON);
 	led_set(4, LED_ON);
 
+	// create input buffer of static 64 len
 	const int len = 64;
 	char buffer[len];
 
@@ -63,43 +64,46 @@ int main() {
 		}
 		printf("\n");
 
+		// if single char inputted, check for 0-3, r,g,b,y
 		if (i == 1) {
-			long val = strtol(buffer, NULL, 10);
-			switch(buffer[0]) {
+			long val = strtol(buffer, NULL, 10); // grab value of buffer in case of 0-3
+			switch(buffer[0]) { // check first char in buffer
 				case '0':
 				case '1':
 				case '2':
 				case '3':
-				//case '4':
 					printf("[%s]\n", buffer);
 					printf("Toggling led%"PRIx32"...\n", val);
 					led_toggle((u32)val);
 					break;
 				case 'r':
-					led6_set(R);
 					printf("[%s]\n", buffer);
+					printf("Setting led6 red...\n", buffer);
+					led6_set(R);
 					break;
 				case 'g':
-					led6_set(G);
 					printf("[%s]\n", buffer);
+					printf("Setting led6 green...\n", buffer);
+					led6_set(G);
 					break;
 				case 'b':
-					led6_set(B);
 					printf("[%s]\n", buffer);
+					printf("Setting led6 blue...\n", buffer);
+					led6_set(B);
 					break;
 				case 'y':
-					led6_set(Y);
 					printf("[%s]\n", buffer);
+					printf("Setting led6 yellow...\n", buffer);
+					led6_set(Y);
 					break;
 				default:
 					break;
 			}
 		}
 	}
-
 	printf("---- program exits here ----\n");
 
-	// turn all off
+	// turn all leds off
 	led_set(ALL, LED_OFF);
 
 	cleanup_platform();					/* cleanup the hardware platform */
