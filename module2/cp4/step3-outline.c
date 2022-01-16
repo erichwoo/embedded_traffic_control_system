@@ -35,7 +35,7 @@ void btn_handler(void *devicep) {
 	XGpio *dev = (XGpio*)devicep;
 
 	/* Read button 0 for high, then act on it */
-	if((XGpio_DiscreteRead(&btnport, CHANNEL1) & 0x1) > 0){
+	if((XGpio_DiscreteRead(&btnport, CHANNEL1) & 0xF) > 0){
 		pushes++;
 		printf(".");
 		printf("pushes: %d, read: %d\n", pushes, (int) XGpio_DiscreteRead(&btnport, CHANNEL1));
