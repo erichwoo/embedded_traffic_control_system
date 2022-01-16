@@ -28,7 +28,7 @@ void io_btn_close(void);
 /*
  * initialize the switches providing a callback
  */
-void io_sw_init(void (*sw_callback)(u32 switchAddress));
+u32 io_sw_init(void (*sw_callback)(u32 switchAddress));
 
 /*
  * close the switches

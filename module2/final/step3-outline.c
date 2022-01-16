@@ -22,7 +22,7 @@
 #include "xgpio.h"		/* axi gpio interface */
 
 /* hidden private state */
-static u32 prevSwStates = 0;		/* keep track of previous state of switch port (gpio dev 2) */
+static u32 prevSwStates;		/* keep track of previous state of switch port (gpio dev 2) */
 
 /* function signatures */
 u32 oneHotDecoder(u32 portData);
@@ -76,22 +76,19 @@ int main() {
 	init_platform();
 
 	/* initialize the gic (c.f. gic.h) */
-	if (gic_init() == XST_FAILURE) {
-	  printf("Failed to initialize the gic. Exiting...\n");
-	  return -1;
-	}
+	gic_init();
 
 	// initialize the buttons using io module
 	io_btn_init(&btn_handler);
-	io_sw_init(&sw_handler);
+	prevSwStates = io_sw_init(&sw_handler);
 
 	// initialize LED module
 	led_init();
 
-
 	printf("[hello]\n"); /* so we are know its alive */
 
 	// create input buffer of static 64 len
+	setvbuf(stdin,NULL,_IONBF,0);
 	const int len = 64;
 	char buffer[len];
 

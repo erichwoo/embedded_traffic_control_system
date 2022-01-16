@@ -45,7 +45,8 @@ void io_btn_close(void){
 /*
  * initialize the switches providing a callback
  */
-void io_sw_init(void (*sw_callback)(u32 switchAddress)){
+u32 io_sw_init(void (*sw_callback)(u32 switchAddress)){
+	// save the sw callback
 	saved_sw_callback = sw_callback;
 
 	/* initialize swport and immediately disable interrupts */
@@ -62,6 +63,9 @@ void io_sw_init(void (*sw_callback)(u32 switchAddress)){
 	XGpio_InterruptEnable(&swport, XGPIO_IR_CH1_MASK);
 	/* enable interrupt to processor (c.f. table 2.1) */
 	XGpio_InterruptGlobalEnable(&swport);
+
+	// return the initial sw state for sw handler
+	return XGpio_DiscreteRead(&swport, CHANNEL1) & 0xF;
 }
 
 /*
