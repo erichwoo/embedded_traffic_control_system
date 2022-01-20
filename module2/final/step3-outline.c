@@ -21,56 +21,13 @@
 #include "gic.h"		/* interrupt controller interface */
 #include "xgpio.h"		/* axi gpio interface */
 
-/* hidden private state */
-static u32 prevSwStates;		/* keep track of previous state of switch port (gpio dev 2) */
-
-/* function signatures */
-u32 oneHotDecoder(u32 portData);
-
-/*
- * control is passed to this function when a button is pushed
- *
- * devicep -- ptr to the device that caused the interrupt
- */
-void btn_handler(void *devicep) {
-	/* coerce the generic pointer into a gpio */
-	XGpio *dev = (XGpio*)devicep;
-
-	u32 portStatus = XGpio_DiscreteRead(dev, CHANNEL1) & 0xF;
-	/* Read buttons for high, then act on it */
-	if(portStatus > 0){
-		// which button was pressed?
-		led_toggle(oneHotDecoder(portStatus));
-	}
-
-	// always clear interrupt after handling it
-	XGpio_InterruptClear(dev, XGPIO_IR_CH1_MASK);
+void btn_callback(u32 btn) {
+	led_toggle(btn);
 }
 
-/*
- * control is passed to this function when a switch is flipped
- *
- * devicep -- ptr to the device that caused the interrupt
- */
-void sw_handler(void *devicep) {
-	/* coerce the generic pointer into a gpio */
-	XGpio *dev = (XGpio*)devicep;
-
-	u32 portStatus = XGpio_DiscreteRead(dev, CHANNEL1) & 0xF;
-	u32 diff = portStatus ^ prevSwStates;
-
-	if(diff > 0){
-		// which switch was toggled?
-		led_toggle(oneHotDecoder(diff));
-	}
-
-	// update prev switch states
-	prevSwStates = portStatus;
-
-	// always clear interrupt after handling it
-	XGpio_InterruptClear(dev, XGPIO_IR_CH1_MASK);
+void sw_callback(u32 sw) {
+	led_toggle(sw);
 }
-
 
 int main() {
 	init_platform();
@@ -79,12 +36,14 @@ int main() {
 	gic_init();
 
 	// initialize the buttons using io module
-	io_btn_init(&btn_handler);
-	prevSwStates = io_sw_init(&sw_handler);
+	io_btn_init(&btn_callback);
+	io_sw_init(&sw_callback);
 
 	// initialize LED module
 	led_init();
+	led_set(4, LED_ON);
 
+	printf("gic, io, led initialized...\n")
 	printf("[hello]\n"); /* so we are know its alive */
 
 	// create input buffer of static 64 len
@@ -131,25 +90,18 @@ int main() {
 			}
 		}
 	}
-	printf("---- program exits here ----\n");
-	printf("\n[done]\n");
-
+	printf("\n UI [done]\n");
 
 	/* close the gic (c.f. gic.h)*/
 	io_sw_close();
 	io_btn_close();
 	gic_close();
-
 	printf("gic closed\n");
-	cleanup_platform();					/* cleanup the hardware platform */
-	return 0;
-}
 
-u32 oneHotDecoder(u32 portData){
-	u32 led = 0;
-	while(portData != 1){
-		portData >>= 1;
-		led++;
-	}
-	return led;
+	// turn off all leds at close
+	led_set(ALL, LED_OFF);
+
+	cleanup_platform();					/* cleanup the hardware platform */
+	printf("---- program exits here ----\n");
+	return 0;
 }

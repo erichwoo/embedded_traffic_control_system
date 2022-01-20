@@ -11,24 +11,20 @@
 #include "xil_types.h"		/* types used by xilinx */
 #include "gic.h"			/* General Interrupt Controller module */
 
-#define INPUT 1				/* Set direction of GPIO Port pins */
-#define CHANNEL1 1			/* which channel of GPIO device */
-
 /*
  * initialize the btns providing a callback
  */
-void io_btn_init(void (*btn_callback)(void* btnAddress));
+void io_btn_init(void (*btn_callback)(u32 btn));
 
 /*
  * close the btns
  */
 void io_btn_close(void);
 
-
 /*
  * initialize the switches providing a callback
  */
-u32 io_sw_init(void (*sw_callback)(u32 switchAddress));
+void io_sw_init(void (*sw_callback)(u32 sw));
 
 /*
  * close the switches
