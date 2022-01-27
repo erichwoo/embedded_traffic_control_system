@@ -20,7 +20,8 @@
 #include "io.h"			/* io module */
 #include "gic.h"		/* interrupt controller interface */
 #include "xgpio.h"		/* axi gpio interface */
-#include "ttc.h"
+#include "ttc.h"		/* triple timer counter on ps */
+#include "servo.h"		/* servo module controlled by axi timer */
 
 // led 4 status variable, flipped in the ttc_callback
 static bool led4IsOn;
@@ -60,6 +61,9 @@ int main() {
 
 	printf("ttc initialized and started...\n");
 
+	servo_init();
+
+	printf("servo initialized and started...\n");
 
 	printf("[hello]\n"); /* so we are know its alive */
 
