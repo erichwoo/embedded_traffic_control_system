@@ -22,6 +22,9 @@
 #include "xgpio.h"		/* axi gpio interface */
 #include "ttc.h"
 
+// led 4 status variable, flipped in the ttc_callback
+static bool led4IsOn;
+
 void btn_callback(u32 btn) {
 	led_toggle(btn);
 }
@@ -31,9 +34,8 @@ void sw_callback(u32 sw) {
 }
 
 void ttc_callback(void) {
-	led_set(4, LED_ON);
-	printf("blink\n");
-	led_set(4, LED_OFF);
+	led_set(4, !led4IsOn);
+	led4IsOn = !led4IsOn;
 }
 
 int main() {
@@ -49,10 +51,16 @@ int main() {
 	// initialize LED module
 	led_init();
 	led_set(4, LED_ON);
+	led4IsOn = LED_ON;
+
+	printf("gic, io, leds initialized...\n");
 
 	ttc_init(1, &ttc_callback);
 	ttc_start();
-	printf("gic, io, led initialized...\n");
+
+	printf("ttc initialized and started...\n");
+
+
 	printf("[hello]\n"); /* so we are know its alive */
 
 	// create input buffer of static 64 len
@@ -99,17 +107,21 @@ int main() {
 			}
 		}
 	}
-	printf("\nUI [done]\n");
+	printf("UI [done]\n");
 
 	/* close the gic (c.f. gic.h)*/
 	io_sw_close();
+	printf("switches closed\n");
 	io_btn_close();
+	printf("buttons closed\n");
 	ttc_close();
+	printf("ttc closed\n");
 	gic_close();
 	printf("gic closed\n");
 
 	// turn off all leds at close
 	led_set(ALL, LED_OFF);
+	printf("leds turned off");
 
 	cleanup_platform();					/* cleanup the hardware platform */
 	printf("---- program exits here ----\n");

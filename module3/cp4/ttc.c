@@ -10,8 +10,9 @@ static void ttc_handler(void *devicep) {
 	XTtcPs *dev = (XTtcPs*)devicep;
 	saved_ttc_callback();
 
-	XTtcPs_InterruptHandler(dev);
-	//XTtcPs_ClearInterruptStatus(&ttcportPs, XTTCPS_IXR_INTERVAL_MASK);
+	// use the status returned by this dev to clear the interrupt on it
+	u32 XTtcPsStatusReg = XTtcPs_GetInterruptStatus(dev);
+	XTtcPs_ClearInterruptStatus(dev, XTtcPsStatusReg);
 }
 
 /*
@@ -24,8 +25,8 @@ void ttc_init(u32 freq, void (*ttc_callback)(void)) {
 	XTtcPs_CfgInitialize(&ttcportPs, XTtcPs_LookupConfig(XPAR_XTTCPS_0_DEVICE_ID), XPAR_XTTCPS_0_BASEADDR); // XPAR_PS7_GPIO_0_BASEADDR
 	XTtcPs_SetOptions(&ttcportPs, XTTCPS_OPTION_INTERVAL_MODE);
 
-	XInterval *interval;
-	u8 *prescaler;
+	XInterval *interval = NULL;
+	u8 *prescaler = NULL;
 	XTtcPs_CalcIntervalFromFreq(&ttcportPs, freq, interval, prescaler);
 	XTtcPs_SetPrescaler(&ttcportPs, *prescaler);
 	XTtcPs_SetInterval(&ttcportPs, *interval);
