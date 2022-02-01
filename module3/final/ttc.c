@@ -21,16 +21,15 @@ void ttc_init(u32 freq, void (*ttc_callback)(void)) {
 	saved_ttc_callback = ttc_callback;
 
 	// initialize the TTC and immediately disable interrupts
-	XTtcPs_CfgInitialize(&ttcportPs, XTtcPs_LookupConfig(XPAR_XTTCPS_0_DEVICE_ID), XPAR_XTTCPS_0_BASEADDR); // XPAR_PS7_GPIO_0_BASEADDR
-	XTtcPs_SetOptions(&ttcportPs, XTTCPS_OPTION_INTERVAL_MODE);
+	XTtcPs_CfgInitialize(&ttcportPs, XTtcPs_LookupConfig(XPAR_XTTCPS_0_DEVICE_ID), XPAR_XTTCPS_0_BASEADDR);
+	XTtcPs_DisableInterrupts(&ttcportPs, XTTCPS_IXR_INTERVAL_MASK);
 
+	XTtcPs_SetOptions(&ttcportPs, XTTCPS_OPTION_INTERVAL_MODE);
 	XInterval *interval = NULL;
 	u8 *prescaler = NULL;
 	XTtcPs_CalcIntervalFromFreq(&ttcportPs, freq, interval, prescaler);
 	XTtcPs_SetPrescaler(&ttcportPs, *prescaler);
 	XTtcPs_SetInterval(&ttcportPs, *interval);
-
-	XTtcPs_DisableInterrupts(&ttcportPs, XTTCPS_IXR_INTERVAL_MASK);
 
 	/* connect handler to the gic (c.f. gic.h) */
 	gic_connect(XPAR_XTTCPS_0_INTR, &ttc_handler, (void*) &ttcportPs);

@@ -11,7 +11,11 @@
 
 static XTmrCtr tmrCtr;
 
-/* Helper function for resetting */
+/* Helper function for resetting
+ * based on AXI Timer Reference Manual (PGO079) formula
+ * for setting the Load register for the desired
+ * PWM_period and PWM_high_time on an up-counter
+ */
 static u32 calcResetValue(double period){
 	return 2 + CTR_MAX - (u32)(period*1e6/XTC_HZ_TO_NS(CLOCK_FREQ));
 }

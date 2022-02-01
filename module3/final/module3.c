@@ -25,7 +25,7 @@
 
 // led 4 status variable, flipped in the ttc_callback
 static bool led4IsOn;
-static u32 led4Freq = 1;
+const static u32 led4Freq = 1;
 static double duty;
 
 void btn_callback(u32 btn) {
