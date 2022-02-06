@@ -1,6 +1,7 @@
 /*
- * main.c -- A program to print a dot each time button 0 is pressed.
+ * module4.c -- builds upon module 3 and adds xADC functionality
  *
+ *	module 3 useful values for interrupts??
  *  Some useful values:
  *  -- XPAR_AXI_GPIO_1_DEVICE_ID -- xparameters.h
  *  -- XPAR_FABRIC_GPIO_1_VEC_ID -- xparameters.h
@@ -22,6 +23,7 @@
 #include "xgpio.h"		/* axi gpio interface */
 #include "ttc.h"		/* triple timer counter on ps */
 #include "servo.h"		/* servo module controlled by axi timer */
+#include "adc.h"		/* adc module */
 
 // led 4 status variable, flipped in the ttc_callback
 static bool led4IsOn;
@@ -30,6 +32,9 @@ static double duty;
 
 void btn_callback(u32 btn) {
 	led_toggle(btn);
+	if(btn == 0) printf("[Temp=%.2fc]\n>", adc_get_temp());
+	if(btn == 1) printf("[VccInt=%.2fv]\n>", adc_get_vccint());
+	if(btn == 2) printf("[Pot=%.2fv]\n>", adc_get_pot());
 }
 
 void sw_callback(u32 sw) {
@@ -55,18 +60,18 @@ int main() {
 	led_init();
 	led_set(4, LED_ON);
 	led4IsOn = LED_ON;
-
 	printf("gic, io, leds initialized...\n");
 
 	ttc_init(led4Freq, &ttc_callback);
 	ttc_start();
-
 	printf("ttc initialized and started...\n");
 
 	servo_init();
 	duty = SERVO_MID;
-
 	printf("servo initialized and started...\n");
+
+	adc_init();
+	printf("XADC Module initialized and started...\n");
 
 	printf("[hello]\n"); /* so we are know its alive */
 
