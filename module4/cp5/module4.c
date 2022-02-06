@@ -131,6 +131,10 @@ int main() {
 					duty = SERVO_MAX;
 					printf("duty cycle set to MAX of %.2lf\n", duty);
 					break;
+				case 'm':
+					duty = SERVO_MID;
+					printf("duty cycle set to MID of %.2lf\n", duty);
+					break;
 				case '0':
 				case '1':
 				case '2':
