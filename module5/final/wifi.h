@@ -21,6 +21,10 @@
 #define UPDATE 	  2
 #define DONE 	  3
 
+// which device to send to when uart_send is called
+#define WIFI_DEV 0
+#define TTY 	 1
+
 #define NUM_WIFI_CALLBACKS 2*3
 
 #define TO  	0
@@ -33,6 +37,10 @@
 #define U_FRO	2*UPDATE + FRO
 
 #define TRIG_LEVEL 1
+
+// constants designating type sizes
+#define PING_BYTE_COUNT   sizeof(ping_t)
+#define UPDATE_BYTE_COUNT sizeof(update_response_t)
 
 // the current mode (state), controlled
 extern u8 mode;

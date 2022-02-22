@@ -26,15 +26,11 @@
 #include "wifi.h"		/* wifi module */
 
 /******************* DEFINES ***********************/
-#define WIFI_DEV 0
-#define TTY 	 1
-
-#define SERVER_ID_1 27								// module 5 server IDs (based on roster)
+// module 5 server IDs (based on roster)
+#define SERVER_ID_1 27
 #define SERVER_ID_2 28
 
-#define PING_BYTE_COUNT   sizeof(ping_t)
-#define UPDATE_BYTE_COUNT sizeof(update_response_t)
-
+// message size constants, for allocating message buffers
 #define INT_MAX_DIGITS 	  11
 #define UPDATE_VALUES_LEN 30
 
@@ -53,14 +49,14 @@ static u32 led4Freq = 1;		// frequency of each led 4 on/off (a value of 1 is .5 
 // servo
 static double duty;				// for the servo position (duty cycle as a percent)
 
-// to server
+// sending to server
 const static ping_t ping = {PING, SERVER_ID_1};
 static update_request_t update = {UPDATE, SERVER_ID_1, 0};
 static int updateSign = 1;		// 1 = positive, -1 = negative
 static bool updateValid = true;
 static bool leadingZero = false;
 
-// from server
+// receiving from server
 static ping_t pong;
 static update_response_t updateResponse;
 static u8 pongCount = 0;
@@ -136,6 +132,9 @@ void update_request_callback(u8 buffer) {
 
 	// carriage return indicates end of update value input
 	if (buffer == (u8)'\r'){
+		// newline
+		u8 newLine = (u8)'\n';
+		uart_send(TTY, (void*)&newLine, TRIG_LEVEL);
 		// send valid numbers off
 		if (updateValid) uart_send(WIFI_DEV, (void*)&update, sizeof(update_request_t));
 		// otherwise print error message
@@ -150,10 +149,6 @@ void update_request_callback(u8 buffer) {
 		updateValid = true;
 		leadingZero = false;
 		updateSign = 1;
-
-		// newline
-		u8 newLine = (u8)'\n';
-		uart_send(TTY, (void*)&newLine, TRIG_LEVEL);
 	}
 	// set leading zero
 	else if (update.value == 0 && buffer == (u8)'0')
