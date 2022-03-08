@@ -38,3 +38,8 @@ void ttc_stop(void);
  * simultaneously disables ttc interrupts
  */
 void ttc_close(void);
+
+/*
+ * ttc_reset -- resets the ttc counter value to 0
+ */
+void ttc_reset(void);

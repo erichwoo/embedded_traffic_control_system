@@ -19,7 +19,6 @@
 #define CONFIGURE 0
 #define PING 	  1
 #define UPDATE 	  2
-#define DONE 	  3
 
 #define NUM_WIFI_CALLBACKS 2*3
 
@@ -35,7 +34,7 @@
 #define TRIG_LEVEL 1
 
 // the current mode (state), controlled
-extern u8 mode;
+//extern u8 mode;
 
 typedef struct {
 	int type;	// must be assigned to PING

@@ -14,7 +14,7 @@ static XGpio btnport;		/* btn GPIO port instance */
 static XGpio swport;		/* sw GPIO port instance */
 
 /* hidden private state */
-static u32 prevSwStates;		/* keep track of previous state of switch port (gpio dev 2) */
+static u32 currSwStates;		/* keep track of current state of switch port (gpio dev 2) */
 
 /* useful definitions */
 #define INPUT 1				/* Set direction of GPIO Port pins */
@@ -64,16 +64,16 @@ static void sw_handler(void *devicep) {
 	/* coerce the generic pointer into a gpio */
 	XGpio *dev = (XGpio*)devicep;
 
-	u32 portStatus = XGpio_DiscreteRead(dev, CHANNEL1) & 0xF;
-	u32 diff = portStatus ^ prevSwStates;
+	u32 nextStates = XGpio_DiscreteRead(dev, CHANNEL1) & 0xF;
+	u32 diff = nextStates ^ currSwStates;
+
+	// update curr switch states
+	currSwStates = nextStates;
 
 	if(diff > 0){
 		// which switch was toggled?
 		saved_sw_callback(oneHotDecoder(diff));
 	}
-
-	// update prev switch states
-	prevSwStates = portStatus;
 
 	// always clear interrupt after handling it
 	XGpio_InterruptClear(dev, XGPIO_IR_CH1_MASK);
@@ -134,7 +134,14 @@ void io_sw_init(void (*sw_callback)(u32 sw)){
 	XGpio_InterruptGlobalEnable(&swport);
 
 	// Set the initial sw state for sw handler
-	prevSwStates = XGpio_DiscreteRead(&swport, CHANNEL1) & 0xF;
+	currSwStates = XGpio_DiscreteRead(&swport, CHANNEL1) & 0xF;
+}
+
+/*
+ * read the sw and return current sw states
+ */
+u32 io_sw_read(void) {
+	return currSwStates;
 }
 
 /*

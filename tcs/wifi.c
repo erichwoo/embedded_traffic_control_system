@@ -26,7 +26,7 @@ static void uart0_handler(void *CallBackRef, u32 Event, unsigned int EventData){
 		XUartPs_Recv(src, &buffer, TRIG_LEVEL);
 
 		// give to correct callback depending on mode
-		switch (mode) {
+		/*switch (mode) {
 			case CONFIGURE:
 				saved_wifi_callbacks[C_FRO](buffer);
 				break;
@@ -38,7 +38,7 @@ static void uart0_handler(void *CallBackRef, u32 Event, unsigned int EventData){
 				break;
 			default:
 				break;
-		}
+		}*/
 	}
 }
 
@@ -52,7 +52,7 @@ static void uart1_handler(void *CallBackRef, u32 Event, unsigned int EventData){
 		XUartPs_Recv(src, &buffer, TRIG_LEVEL);
 
 		// give to correct callback depending on mode
-		switch (mode) {
+		/*switch (mode) {
 			case CONFIGURE:
 				saved_wifi_callbacks[C_TO](buffer);
 				break;
@@ -63,7 +63,7 @@ static void uart1_handler(void *CallBackRef, u32 Event, unsigned int EventData){
 				saved_wifi_callbacks[U_TO](buffer);
 			default:
 				break;
-		}
+		}*/
 	}
 }
 

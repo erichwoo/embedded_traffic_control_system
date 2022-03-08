@@ -23,7 +23,8 @@
 #include "ttc.h"		/* triple timer counter on ps */
 #include "servo.h"		/* servo module controlled by axi timer */
 #include "adc.h"		/* adc module */
-#include "wifi.h"		/* wifi module */
+//#include "wifi.h"		/* wifi module */
+#include "fsm.h"
 
 /********************* DEFINES **********************/
 #define TTC_FREQ 10
@@ -41,25 +42,25 @@ void init(void) {
 	gic_init();
 
 	// uart initialization
-	wifi_callbacks[C_TO] = configure_request_callback;
+	/*wifi_callbacks[C_TO] = configure_request_callback;
 	wifi_callbacks[C_FRO] = configure_response_callback;
 	wifi_callbacks[P_TO] = ping_callback;
 	wifi_callbacks[P_FRO] = pong_callback;
 	wifi_callbacks[U_TO] = update_request_callback;
 	wifi_callbacks[U_FRO] = update_response_callback;
 	uart_init(wifi_callbacks);
-
+	*/
 	// btn & sw initialization
 	io_btn_init(&btn_callback);
 	io_sw_init(&sw_callback);
 
 	// led initialization
 	led_init();
-	led_set(4, LED_ON);
+	//led_set(4, LED_ON);
 
 	// led6 initialization
 	led6_init();
-	led6_set(R);
+	//led6_set(R);
 
 	// ttc initialization
 	ttc_init(TTC_FREQ, &ttc_callback);
@@ -75,7 +76,7 @@ void init(void) {
 
 void destroy(void) {
 	// close gic interrupts
-	uart_close();
+	//uart_close();
 	io_sw_close();
 	io_btn_close();
 	ttc_close();
@@ -97,9 +98,11 @@ int main(){
 	// initialize
 	init();
 
+	init_state();
+
 	// main
 	printf("[hello]\n");
-	while(mode != DONE){
+	while(get_state() != DONE){
 		sleep(1);
 	}
 	printf("\n---- main while loop done ----\n");

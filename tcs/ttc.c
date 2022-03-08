@@ -56,6 +56,13 @@ void ttc_stop(void) {
 }
 
 /*
+ * ttc_reset -- resets the ttc counter value
+ */
+void ttc_reset(void) {
+	XTtcPs_ResetCounterValue(&ttcportPs);
+}
+
+/*
  * ttc_close -- close down the ttc
  */
 void ttc_close(void) {

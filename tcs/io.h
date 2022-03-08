@@ -22,6 +22,11 @@ void io_btn_init(void (*btn_callback)(u32 btn));
 void io_btn_close(void);
 
 /*
+ * read the sws
+ */
+u32 io_sw_read(void);
+
+/*
  * initialize the switches providing a callback
  */
 void io_sw_init(void (*sw_callback)(u32 sw));
