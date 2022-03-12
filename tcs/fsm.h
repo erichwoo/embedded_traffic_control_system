@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "unistd.h"
+#include <unistd.h> 	/* sleep */
+#include <stdbool.h>    /* toggle blue light functionality */
 #include "led.h"		/* LED Module */
 #include "io.h"			/* io module, buttons & switches */
 #include "gic.h"		/* general interrupt controller interface, provided by  */
@@ -18,37 +19,43 @@
 // default states
 #define PEDESTRIAN	0
 #define Y2G			1
-#define Y2R			2
-#define V_MIN		3
-#define V_OK		4
-#define V_MIN_PED	5
+#define V_MIN		2
+#define V_OK		3
+#define V_MIN_PED	4
+#define Y2R			5
 
 // train states
-#define TRAIN		6
-#define Y_TRAIN		7
+#define Y_TRAIN		6
+#define TRAIN		7
 #define PED_TRAIN	8
-#define Y_TRAIN_CLR	9
 
-// maintenence states
-#define MAINTENANCE	10
-#define M_TRAIN		11
-#define M_CLR		12
+// maintenance states
+#define MAINTENANCE	9
+#define M_TRAIN		10
+#define M_CLR		11
 
 // interrupt timing in secs
 #define PED_TIME 	10
 #define LIGHT_TIME	3
 #define V_MIN_TIME  10
+#define BLUE_TIME	1
 
 #define PED_LIGHT	4
-#define TM_LIGHT	6
 
 // transitions
-#define M_SW_HI		0
-#define M_SW_LO		1
-#define T_SW_HI		2
-#define T_SW_LO		3
-#define P_BTN		4
-#define T_INT		5
+#define DEFAULT		0
+#define M_SW_HI		1
+#define M_SW_LO		2
+#define T_SW_HI		3
+#define T_SW_LO		4
+#define P_BTN		5
+#define T_INT		6
+
+// I/O defines
+
+// gate position
+#define OPEN SERVO_MAX
+#define CLOSED SERVO_MIN
 
 void ttc_callback(void);
 void btn_callback(u32 btn);

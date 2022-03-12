@@ -28,10 +28,8 @@
 
 /********************* DEFINES **********************/
 #define TTC_FREQ 10
-#define OPEN SERVO_MAX
-#define CLOSED SERVO_MIN
 
-static double gate_pos = OPEN;
+//static double gate_pos = OPEN;
 
 /***************************** MAIN *************************/
 void init(void) {
@@ -68,7 +66,7 @@ void init(void) {
 	// servo initialization
 	servo_init();
 	servo_set(OPEN);
-	gate_pos = OPEN;
+	//gate_pos = OPEN;
 
 	// XADC initialization
 	adc_init();
@@ -98,10 +96,9 @@ int main(){
 	// initialize
 	init();
 
-	init_state();
-
 	// main
 	printf("[hello]\n");
+	init_state();
 	while(get_state() != DONE){
 		sleep(1);
 	}
