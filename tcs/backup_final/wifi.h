@@ -6,8 +6,6 @@
  * Wi-Fly peripheral over USART and handling all communication.
  */
 
-#pragma once
-
 #include <stdio.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -17,16 +15,26 @@
 #include "gic.h"
 
 /* Defines */
-
 // the modes the user can be in
-//#define CONFIGURE 0
-//#define PING 	  1
+#define CONFIGURE 0
+#define PING 	  1
 #define UPDATE 	  2
 
-#define WIFI_DEV 0
-#define TTY 	 1
+/*#define NUM_WIFI_CALLBACKS 2*3
 
-#define TRIG_LEVEL 1		/* Receive FIFO Trigger Level, in bytes */
+#define TO  	0
+#define FRO 	1
+#define C_TO 	2*CONFIGURE + TO
+#define C_FRO   2*CONFIGURE + FRO
+#define P_TO 	2*PING + TO
+#define P_FRO	2*PING + FRO
+#define U_TO 	2*UPDATE + TO
+#define U_FRO	2*UPDATE + FRO
+*/
+#define TRIG_LEVEL 1
+
+// the current mode (state), controlled
+//extern u8 mode;
 
 typedef struct {
 	int type;	// must be assigned to PING

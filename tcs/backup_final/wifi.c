@@ -19,12 +19,12 @@ static void uart0_handler(void *CallBackRef, u32 Event, unsigned int EventData){
 	// for loopback, correctly determine src and destination devices
 	XUartPs* src = (XUartPs*) CallBackRef;
 	//XUartPs* dest = &uart1;
-	/*if (Event == 1) {
+	if (Event == 1) {
 		printf("1\n");
 	}
 	if (Event == 3) {
 		printf("3\n");
-	}*/
+	}
 	if(Event == XUARTPS_EVENT_RECV_DATA && src == &uart0){
 		// receive byte
 		u8 buffer;
@@ -32,6 +32,21 @@ static void uart0_handler(void *CallBackRef, u32 Event, unsigned int EventData){
 
 		// pretend everything we receive is an update packet
 		saved_wifi_callback(buffer);
+
+		// give to correct callback depending on mode
+		/*switch (mode) {
+			case CONFIGURE:
+				saved_wifi_callbacks[C_FRO](buffer);
+				break;
+			case PING:
+				saved_wifi_callbacks[P_FRO](buffer);
+				break;
+			case UPDATE:
+				saved_wifi_callbacks[U_FRO](buffer);
+				break;
+			default:
+				break;
+		}*/
 	}
 }
 
@@ -40,9 +55,23 @@ static void uart1_handler(void *CallBackRef, u32 Event, unsigned int EventData){
 	//XUartPs* dest = &uart0;
 
 	if(Event == XUARTPS_EVENT_RECV_DATA && src == &uart1){
-		// receive byte onto keyboard
+		// receive byte
 		u8 buffer;
 		XUartPs_Recv(src, &buffer, TRIG_LEVEL);
+
+		// give to correct callback depending on mode
+		/*switch (mode) {
+			case CONFIGURE:
+				saved_wifi_callbacks[C_TO](buffer);
+				break;
+			case PING:
+				saved_wifi_callbacks[P_TO](buffer);
+				break;
+			case UPDATE:
+				saved_wifi_callbacks[U_TO](buffer);
+			default:
+				break;
+		}*/
 	}
 }
 

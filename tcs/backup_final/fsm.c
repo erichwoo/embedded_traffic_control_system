@@ -5,13 +5,18 @@
 
 #include "fsm.h"
 
+#define WIFI_DEV 0
+#define TTY 	 1
+
+#define SERVER_ID 27								// module 5 server IDs (based on roster)
+
 #define UPDATE_BYTE_COUNT sizeof(update_response_t)
 
-#define FETCH_FREQ 3						/* how often to poll server for train status, per 100ms */
+#define FETCH_TRIGGER 3
 
 /************************ STATIC FUNCTION DECLARATIONS ***********************/
 
-static void set_blue(bool on_off);
+static void blue_off(void);
 static void reset_ttc(void);
 static void restart_ttc(int trig);
 static void change_state(int transition);
@@ -19,26 +24,27 @@ static void generate_outputs(void);
 
 /****************************** STATIC VARIABLES *****************************/
 
-static bool ttcIsOn = false;		/* if we are using ttc for FSM (rather than just polling uart0) */
+static bool ttcIsOn = false;
 static int counter = 0;             /* counter/divider for ttc, which operates at 10 Hz */
 static int trigger;				    /* desired trigger (sec) to run new code */
 static int state;					/* current FSM state */
 static bool blueStatus = LED_OFF;   /* LED6 Blue-light status (On/Off) */
 
-// uart0 interfacing
-static int fetchCounter = 0; 		/* fetch every 300ms > 250ms */
-static update_request_t request = {UPDATE, SERVER_ID, SERVER_START_VAL};
+static int fetchCounter = 0;  /* fetch every 300ms > 250ms */
+
+static update_request_t request = {UPDATE, SERVER_ID, SERVER_START};
+
 static update_response_t response;
 static u8 responseCount = 0;
-static int remoteTrans;
 
+static int remoteSwTrans; // server = 3
 static bool init = true;
 
 /**/
-
-static void set_blue(bool on_off) {
-	blueStatus = on_off;
-	set_blue_light(blueStatus);
+static void blue_off(void) {
+	// turn off
+	led6_set(OFF);
+	blueStatus = LED_OFF;
 }
 
 static void restart_ttc(int trig) {
@@ -58,9 +64,9 @@ static void reset_ttc(void) {
 /****************************** PERIPHERAL CALLBACKS *******************************/
 
 void ttc_callback(void) {
-	// poll Wifi Module # 300ms intervals (counter increments @ 100ms intervals)
+	// poll Wifi Module
 	fetchCounter++;
-	if (fetchCounter >= FETCH_FREQ) {
+	if (fetchCounter >= FETCH_TRIGGER) {
 		uart_send(WIFI_DEV, (void*) &request, sizeof(update_request_t));
 		fetchCounter = 0;
 	}
@@ -69,18 +75,19 @@ void ttc_callback(void) {
 	if (ttcIsOn) {
 		counter++;
 
-		// polling potentiometer if in MAINTENANCE STATES
-		if (M_STATES) {
-			manual_gate();
+		// polling potentiometer if in MAITNENANCE STATES
+		if (state == MAINTENANCE || state == M_TRAIN || state == M_CLR) {
+			servo_set_percent(adc_get_pot_percent());
 		}
 
 		if (counter >= trigger*10) {
-			if (M_STATES) {
+			if (state == MAINTENANCE || state == M_TRAIN || state == M_CLR) {
 				//restart the counter
 				counter = 0;
 
 				// toggle blue
-				set_blue(!blueStatus);
+				blueStatus = !blueStatus;
+				led6_set((blueStatus) ? B : OFF);
 			}
 			else {
 				// reset and stop counter before changing state
@@ -114,21 +121,21 @@ void update_response_callback(u8 buffer) {
 	*updateRecv = buffer;
 	responseCount++;
 
-	// if response is fully stored, analyze value @ SERVER_ID for potential transition
+	// if server_response_t is fully stored, print the update message
 	if (responseCount == UPDATE_BYTE_COUNT) {
 		int newTrans = response.values[SERVER_ID];
 
 		// deal with server response
 		if (init) {
-			remoteTrans = newTrans;
+			remoteSwTrans = newTrans;
 			init = false;
 		}
 		else {
-			if (newTrans >= M_SW_HI && newTrans <= T_SW_LO && newTrans != remoteTrans) {
-				remoteTrans = newTrans;
+			if (newTrans >= M_SW_HI && newTrans <= T_SW_LO && newTrans != remoteSwTrans) {
+				remoteSwTrans = newTrans;
 				change_state(newTrans);
 			}
-			else remoteTrans = newTrans;
+			else remoteSwTrans = newTrans;
 		}
 
 		// reset update
@@ -155,34 +162,28 @@ int get_state(void) {
 }
 
 static void change_state(int transition) {
-	// path to exit program
-	if (transition == DONE) {
-		state = DONE;
-		return;
-	}
-
 	// printing Maintenance entry/exit and train arriving/clearing
 	switch (transition) {
 		case M_SW_HI:
-			if (!M_STATES) { // error-checking
+			if (state != MAINTENANCE && state != M_TRAIN && state != M_CLR) { // error-checking
 				printf("Maintenance entry!\n");
 			}
 			break;
 		case M_SW_LO:
-			if (M_STATES) { // error-checking
+			if (state == MAINTENANCE || state == M_TRAIN || state == M_CLR) { // error-checking
 				printf("Maintenance exit!\n");
-				reset_ttc(); 				// clear the blue light maintenance counter as we leave MAINTENANCE
-				set_blue(LED_OFF);
+				reset_ttc(); // clear the blue light maintenance counter
+				blue_off();
 			}
 			break;
 		case T_SW_HI:
 			printf("Train is arriving!\n");
-			if (!M_STATES && state != Y_TRAIN) {
+			if (state != MAINTENANCE && state != M_TRAIN && state != M_CLR && state != Y_TRAIN) {
 				reset_ttc(); 	 				// clear the timer counter
 			}
 			break;
 		case T_SW_LO:
-			if (T_STATES) { // error-checking
+			if (state == TRAIN || state == M_TRAIN || state == Y_TRAIN) { // error-checking
 				printf("Train is clearing!\n");
 			}
 			break;
@@ -193,7 +194,7 @@ static void change_state(int transition) {
 	// next state logic
 	int next_state = state;
 	switch (state) {
-		/**************************** GENERAL STATES ***************************/
+		// general states
 		case PEDESTRIAN:
 			if (transition == T_INT) 		next_state = Y2G;
 			break;
@@ -214,7 +215,7 @@ static void change_state(int transition) {
 			if (transition == T_INT) 		next_state = Y2R;
 			break;
 
-		/**************************** TRAIN STATES ***************************/
+		// train states
 		case TRAIN:
 			if (transition == M_SW_HI) 		next_state = M_TRAIN;
 			else if (transition == T_SW_LO) next_state = PED_TRAIN;
@@ -229,7 +230,7 @@ static void change_state(int transition) {
 			else if (transition == T_INT) 	next_state = Y2G;
 			break;
 
-		/*********************** MAINTENANCE STATES ************************/
+		// maintenence states
 		case MAINTENANCE:
 			if (transition == T_SW_HI) 		next_state = M_TRAIN;
 			else if (transition == M_SW_LO) next_state = PEDESTRIAN;
@@ -246,16 +247,22 @@ static void change_state(int transition) {
 			break;
 	}
 
-	// train arriving 2nd highest precedence (ignoring if in MAINTENANCE STATE or PED_TRAIN/TRAIN)
-	if (transition == T_SW_HI && !M_STATES && state != PED_TRAIN && state != TRAIN)
+	// train arriving 2nd highest precedence (ignoring if in MAINTENCE STATE)
+	if (transition == T_SW_HI && state != MAINTENANCE && state != PED_TRAIN && state != TRAIN && state != M_TRAIN && state != M_CLR)
 		next_state = Y_TRAIN;
 
-	// maintenance highest precedence (ignoring if in TRAIN or MAINTENANCE state)
-	if (transition == M_SW_HI && !T_STATES && !M_STATES)
+	// maintenance highest precedence (ignoring if in TRAIN state)
+	if (transition == M_SW_HI && state != TRAIN && state != Y_TRAIN && state != M_TRAIN && state != M_CLR)
 		next_state = MAINTENANCE;
 
-	/***************************** GENERATE OUTPUTS FOR NEXT STATE *****************************/
+	if (transition == DONE) {
+		state = DONE;
+		return;
+	}
+
 	printf("curr state: %d, next state: %d, transition: %d\n", state, next_state, transition);
+
+	// update state if needed
 	if (next_state != state) {
 		state = next_state;
 		generate_outputs();
@@ -263,59 +270,91 @@ static void change_state(int transition) {
 }
 
 static void generate_outputs(void) {
-	// default outputs (PED light off, Traffic lights off)
-	set_ped_light(LED_OFF);
-	close_traffic_light();
+	// default outputs
+	led_set(PED_LIGHT, LED_OFF);
+	led6_set(OFF);
 
 	switch (state) {
-		/************************** GENERAL STATES *****************************/
-		case PEDESTRIAN: 				// open gate, set PED light, set RED light, load PED_TIME timer trigger
+		// general states
+		case PEDESTRIAN:
+			// load timer w/ PED_TIME interrupt
 			restart_ttc(PED_TIME);
-			open_gate();
-			set_ped_light(LED_ON);
-			set_traffic_light(R);
+
+			// set gate high
+			servo_set(OPEN);
+
+			// set PED light
+			led_set(PED_LIGHT, LED_ON);
+
+			// set RED light
+			led6_set(R);
 			break;
-		case Y2G: 						// same outputs as Y2R
-		case Y2R:						// open gate, set YELLOW light, load LIGHT_TIME timer trigger
+		case Y2G:
+			// falls through to Y2R
+		case Y2R:
+			// load timer w/ LIGHT_TIME interrupt
 			restart_ttc(LIGHT_TIME);
-			open_gate();
-			set_traffic_light(Y);
+
+			// set gate high
+			servo_set(OPEN);
+
+			// set YELLOW light
+			led6_set(Y);
 			break;
-		case V_MIN:						// load V_MIN_TIME timer trigger + same outputs as V_OK/V_MIN_PED
+		case V_MIN:
+			// load timer w// V_MIN_TIME interrupt
 			restart_ttc(V_MIN_TIME);
-		case V_OK:						// same outputs as V_MIN_PED
-		case V_MIN_PED:					// open gate, set GREEN light
-			open_gate();
-			set_traffic_light(G);
+			// set GREEN light falls through
+		case V_OK:
+			// set GREEN light falls through
+		case V_MIN_PED:
+			// set GREEN light
+			led6_set(G);
+			// set gate high
+			servo_set(OPEN);
 			break;
 
-		/***************************** TRAIN STATES *********************************/
-		case Y_TRAIN:					// open gate, set YELLOW light, load LIGHT_TIME timer trigger
-			restart_ttc(LIGHT_TIME);
-			open_gate();
-			set_traffic_light(Y);
-			break;
-		case TRAIN:						// close gate & print, set PED light, set RED light
-			close_gate();
+		// train states
+		case TRAIN:
+			// close gate and print
+			servo_set(CLOSED);
 			printf("Gate is closed!\n");
-			set_ped_light(LED_ON);
-			set_traffic_light(R);
+			// RED light
+			led6_set(R);
+			// PED light
+			led_set(PED_LIGHT, LED_ON);
 			break;
-		case PED_TRAIN:					// open gate, set PED light, set RED light, load PED_TIME timer trigger
+		case Y_TRAIN:
+			// load timer w/ LIGHT_TIME interrupt
+			restart_ttc(LIGHT_TIME);
+			// set gate high
+			servo_set(OPEN);
+			// YELLOW light
+			led6_set(Y);
+			break;
+		case PED_TRAIN:
+			// load timer w/ PED_TIME interrupt
 			restart_ttc(PED_TIME);
-			open_gate();
+			// RED light
+			led6_set(R);
+			// PED light
+			led_set(PED_LIGHT, LED_ON);
+			// open gate and print
+			servo_set(OPEN);
 			printf("Gate is open!\n");
-			set_ped_light(LED_ON);
-			set_traffic_light(R);
 			break;
 
-		/************************** MAINTENANCE STATES *********************************/
-		case MAINTENANCE:				// same outputs as M_TRAIN
-		case M_TRAIN:					// set BLUE light, load BLUE_TIME timer trigger (for toggling)
-			set_blue(LED_ON);
+		// maintenance states
+		case MAINTENANCE:
+			// same as M_TRAIN
+		case M_TRAIN:
+			// BLUE light on
+			blueStatus = LED_ON;
+			led6_set(B);
+			// load timer for 1 sec freq
 			restart_ttc(BLUE_TIME);
 			break;
-		case M_CLR:						// no outputs, immediately change state on default transition
+		case M_CLR:
 			change_state(DEFAULT);
 			break;
 		default:

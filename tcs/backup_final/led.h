@@ -61,11 +61,6 @@ bool led_get(u32 led);
  */
 void led_toggle(u32 led);
 
-/*
- * turn off LEDs 0-4
- */
-void led_close(void);
-
 /**
  * Set the color of led6 (assumed always on)
  *
@@ -76,11 +71,6 @@ void led_close(void);
  * - y = 0b110 aka 6
  */
 void led6_set(u32 color);
-
-/*
- * turn off led6
- */
-void led6_close(void);
 
 /**
  * Special function to initialize led6

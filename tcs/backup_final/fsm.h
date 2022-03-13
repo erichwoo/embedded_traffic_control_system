@@ -4,13 +4,15 @@
 
 #pragma once
 
-#include <unistd.h> 			/* sleep */
-#include <stdbool.h>    		/* toggle blue light functionality */
-#include "io.h"					/* io module, buttons & switches */
-#include "gic.h"				/* general interrupt controller interface, provided by  */
-#include "ttc.h"				/* triple timer counter on ps */
-#include "wifi.h"				/* wifi module */
-#include "traffic_wrapper.h"	/* wrapper functions for traffic control */
+#include <unistd.h> 	/* sleep */
+#include <stdbool.h>    /* toggle blue light functionality */
+#include "led.h"		/* LED Module */
+#include "io.h"			/* io module, buttons & switches */
+#include "gic.h"		/* general interrupt controller interface, provided by  */
+#include "ttc.h"		/* triple timer counter on ps */
+#include "servo.h"		/* servo module controlled by axi timer */
+#include "adc.h"		/* adc module */
+#include "wifi.h"		/* wifi module */
 
 #define DONE 		-1
 
@@ -32,14 +34,13 @@
 #define M_TRAIN		10
 #define M_CLR		11
 
-#define M_STATES (state == MAINTENANCE || state == M_TRAIN || state == M_CLR)
-#define T_STATES (state == TRAIN || state == M_TRAIN || state == Y_TRAIN)
-
 // interrupt timing in secs
 #define PED_TIME 	10
 #define LIGHT_TIME	3
 #define V_MIN_TIME  10
 #define BLUE_TIME	1
+
+#define PED_LIGHT	4
 
 // transitions
 #define M_SW_HI		0
@@ -50,12 +51,16 @@
 #define T_INT		5
 #define DEFAULT		6
 
-// Wifi Module
-#define REQUEST_ID			0
-#define DUMMY				0
-#define SERVER_ID 			27	// server ID (based on course roster)
-#define SERVER_START_VAL	-1
+// I/O defines
 
+// gate position
+#define OPEN 	SERVO_MAX
+#define CLOSED 	SERVO_MIN
+
+// Wifi Module
+#define REQUEST_ID		0
+#define DUMMY			0
+#define SERVER_START	-1
 /******************** FUNCTION DECLARATIONS **************************/
 
 // Peripheral Callbacks

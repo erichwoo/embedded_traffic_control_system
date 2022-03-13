@@ -23,11 +23,13 @@
 #include "ttc.h"		/* triple timer counter on ps */
 #include "servo.h"		/* servo module controlled by axi timer */
 #include "adc.h"		/* adc module */
-#include "wifi.h"		/* wifi module */
+//#include "wifi.h"		/* wifi module */
 #include "fsm.h"
 
 /********************* DEFINES **********************/
 #define TTC_FREQ 10
+
+//static double gate_pos = OPEN;
 
 /***************************** MAIN *************************/
 void init(void) {
@@ -55,6 +57,7 @@ void init(void) {
 
 	// servo initialization
 	servo_init();
+	servo_set(OPEN);
 
 	// XADC initialization
 	adc_init();
@@ -62,7 +65,7 @@ void init(void) {
 
 void destroy(void) {
 	// close gic interrupts
-	uart_close();
+	//uart_close();
 	io_sw_close();
 	io_btn_close();
 	ttc_close();
@@ -71,8 +74,7 @@ void destroy(void) {
 	gic_close();
 
 	// turn off all leds at close
-	led_close();
-	led6_close();
+	led_set(ALL, LED_OFF);
 
 	printf("All Peripherals closed. Goodbye!\n");
 

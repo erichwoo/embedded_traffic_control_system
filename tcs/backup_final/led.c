@@ -6,9 +6,9 @@
 
 #include "led.h"
 
-static XGpio port;		// led 0-3
-static XGpio port6; 	// led 6
-static XGpioPs portPs; 	// led 4
+static XGpio port;
+static XGpio port6; // just for led 6
+static XGpioPs portPs;
 
 void led_init(void) {
 	// AXI-GPIO device0: led0-3
@@ -58,17 +58,9 @@ void led_toggle(u32 led) {
 	XGpio_DiscreteWrite(&port, CHANNEL1, (0x1 << led) ^ XGpio_DiscreteRead(&port, CHANNEL1));
 }
 
-void led_close(void) {
-	led_set(ALL, LED_OFF);
-}
-
 void led6_set(u32 color){
 	u32 mask = XGpio_DiscreteRead(&port6, CHANNEL1) & ~(W);
 	XGpio_DiscreteWrite(&port6, CHANNEL1, color | mask); // rmw
-}
-
-void led6_close(void) {
-	led6_set(OFF);
 }
 
 void led6_init(void){
